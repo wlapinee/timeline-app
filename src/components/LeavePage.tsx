@@ -148,7 +148,7 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
             <select
               value={form.member_id || ''}
               onChange={e => setForm({ ...form, member_id: e.target.value })}
-              className={`w-full px-3.5 py-2.5 rounded-lg border bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 ${submitted && !form.member_id ? 'border-red-500 ring-1 ring-red-500/50' : 'border-surface-400'}`}
+              className={`w-full px-3.5 py-2.5 rounded-lg border bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 appearance-none [color-scheme:dark] ${submitted && !form.member_id ? 'border-red-500 ring-1 ring-red-500/50' : 'border-surface-400'}`}
             >
               <option value="">Select member...</option>
               {members.map(m => <option key={m.id} value={m.id}>{m.name} — {m.role}</option>)}
@@ -163,7 +163,7 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
 
           <div>
             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Leave Type</label>
-            <select value={form.leave_type || 'annual'} onChange={e => setForm({ ...form, leave_type: e.target.value })} className="w-full px-3.5 py-2.5 rounded-lg border border-surface-400 bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50">
+            <select value={form.leave_type || 'annual'} onChange={e => setForm({ ...form, leave_type: e.target.value })} className="w-full px-3.5 py-2.5 rounded-lg border border-surface-400 bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 appearance-none [color-scheme:dark]">
               {LEAVE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label} ({t.labelTh})</option>)}
             </select>
           </div>
