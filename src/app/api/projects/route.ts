@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import { getDb } from '@/db';
+import { projects } from '@/db/schema';
+import { asc } from 'drizzle-orm';
 
 export async function GET() {
+  const db = getDb();
   try {
-    const rows = await sql`SELECT * FROM projects ORDER BY created_at ASC LIMIT 1`;
-    return NextResponse.json(rows[0] ?? null);
+    const [row] = await db.select().from(projects).orderBy(asc(projects.created_at)).limit(1);
+    return NextResponse.json(row ?? null);
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }

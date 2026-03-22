@@ -5,7 +5,9 @@
       "Bash(npx tsc:*)",
       "WebFetch(domain:neon.tech)",
       "WebSearch",
-      "WebFetch(domain:neon.com)"
+      "WebFetch(domain:neon.com)",
+      "Bash(curl -s http://localhost:3000/api/projects)",
+      "Bash(curl -s http://localhost:3000/api/members)"
     ]
   }
 }

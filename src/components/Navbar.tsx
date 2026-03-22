@@ -6,7 +6,6 @@ import { useState } from 'react';
 interface NavProps {
   page: Page;
   setPage: (p: Page) => void;
-  onSetup: () => void;
 }
 
 const NAV_ITEMS: { key: Page; label: string; icon: React.ReactNode }[] = [
@@ -39,7 +38,7 @@ const NAV_ITEMS: { key: Page; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-export default function Navbar({ page, setPage, onSetup }: NavProps) {
+export default function Navbar({ page, setPage }: NavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -71,17 +70,6 @@ export default function Navbar({ page, setPage, onSetup }: NavProps) {
           ))}
         </div>
 
-        {/* Desktop setup btn */}
-        <button
-          onClick={onSetup}
-          className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg border border-surface-300 bg-surface-200 text-gray-400 hover:text-gray-200 text-[13px] font-medium transition-colors"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-          </svg>
-          Supabase
-        </button>
-
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -111,15 +99,6 @@ export default function Navbar({ page, setPage, onSetup }: NavProps) {
               {item.label}
             </button>
           ))}
-          <button
-            onClick={() => { onSetup(); setMobileOpen(false); }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-surface-300"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-            </svg>
-            Supabase Setup
-          </button>
         </div>
       )}
     </nav>

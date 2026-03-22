@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import { getDb } from '@/db';
+import { leaveRequests } from '@/db/schema';
+import { desc } from 'drizzle-orm';
 
 export async function GET() {
+  const db = getDb();
   try {
-    const rows = await sql`SELECT * FROM leave_requests ORDER BY created_at DESC`;
+    const rows = await db.select().from(leaveRequests).orderBy(desc(leaveRequests.created_at));
     return NextResponse.json(rows);
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
@@ -11,14 +14,18 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const db = getDb();
   try {
     const { member_id, leave_type, start_date, end_date, reason, status } = await req.json();
-    const rows = await sql`
-      INSERT INTO leave_requests (member_id, leave_type, start_date, end_date, reason, status)
-      VALUES (${member_id}, ${leave_type}, ${start_date}, ${end_date}, ${reason ?? null}, ${status ?? 'pending'})
-      RETURNING *
-    `;
-    return NextResponse.json(rows[0], { status: 201 });
+    const [row] = await db.insert(leaveRequests).values({
+      member_id,
+      leave_type,
+      start_date,
+      end_date,
+      reason: reason ?? null,
+      status: status ?? 'pending',
+    }).returning();
+    return NextResponse.json(row, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }

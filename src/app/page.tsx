@@ -7,11 +7,9 @@ import Navbar from '@/components/Navbar';
 import GanttPage from '@/components/GanttPage';
 import TeamPage from '@/components/TeamPage';
 import LeavePage from '@/components/LeavePage';
-import SetupModal from '@/components/SetupModal';
 
 export default function Home() {
   const [page, setPage] = useState<Page>('gantt');
-  const [showSetup, setShowSetup] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [members, setMembersState] = useState<TeamMember[]>([]);
@@ -98,7 +96,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      <Navbar page={page} setPage={setPage} onSetup={() => setShowSetup(true)} />
+      <Navbar page={page} setPage={setPage} />
 
       <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-5 sm:py-6">
         {page === 'gantt' && (
@@ -123,7 +121,6 @@ export default function Home() {
         )}
       </main>
 
-      <SetupModal open={showSetup} onClose={() => setShowSetup(false)} />
     </div>
   );
 }
