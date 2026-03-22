@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { LeaveRequest, TeamMember } from '@/types';
 import { formatDate, parseDate, getWorkingDays, getHolidaysInRange, generateId, LEAVE_TYPES, LEAVE_STATUS, diffDays } from '@/lib/holidays';
 import Modal from './Modal';
@@ -19,19 +19,25 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
     end_date: formatDate(new Date()), reason: '',
   });
   const [form, setForm] = useState<Partial<LeaveRequest>>(defaultForm());
+  const [submitted, setSubmitted] = useState(false);
+
+  const dateError = form.start_date && form.end_date && form.start_date > form.end_date;
 
   function handleSubmit() {
-    if (!form.member_id || !form.start_date || !form.end_date) return;
-    setLeaveRequests(prev => [...prev, { ...form, id: generateId(), status: 'pending' } as LeaveRequest]);
+    setSubmitted(true);
+    if (!form.member_id || !form.start_date || !form.end_date || dateError) return;
+    setLeaveRequests(prev => [...prev, { ...form, id: generateId(), status: 'approved' } as LeaveRequest]);
     setForm(defaultForm());
+    setSubmitted(false);
     setShowAdd(false);
   }
 
-  function handleStatus(id: string, status: 'approved' | 'rejected') {
-    setLeaveRequests(prev => prev.map(lr => lr.id === id ? { ...lr, status } : lr));
+  function handleDelete(id: string) {
+    setLeaveRequests(prev => prev.filter(lr => lr.id !== id));
   }
 
-  const filtered = filter === 'all' ? leaveRequests : leaveRequests.filter(lr => lr.status === filter);
+  const filtered = (filter === 'all' ? leaveRequests : leaveRequests.filter(lr => lr.status === filter))
+    .slice().sort((a, b) => b.start_date.localeCompare(a.start_date));
   const pendingCount = leaveRequests.filter(l => l.status === 'pending').length;
 
   return (
@@ -110,24 +116,17 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
                   </div>
                 </div>
 
-                {lr.status === 'pending' && (
-                  <div className="flex gap-2 self-end sm:self-center">
-                    <button
-                      onClick={() => handleStatus(lr.id, 'approved')}
-                      className="flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-2 rounded-lg border border-green-800 bg-green-950 text-green-400 hover:bg-green-900 transition-colors text-xs sm:text-sm font-medium"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
-                      <span className="sm:hidden">Approve</span>
-                    </button>
-                    <button
-                      onClick={() => handleStatus(lr.id, 'rejected')}
-                      className="flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-2 rounded-lg border border-red-800 bg-red-950 text-red-400 hover:bg-red-900 transition-colors text-xs sm:text-sm font-medium"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                      <span className="sm:hidden">Reject</span>
-                    </button>
-                  </div>
-                )}
+                <div className="flex gap-2 self-end sm:self-center">
+                  <button
+                    onClick={() => handleDelete(lr.id)}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg border border-surface-400 text-gray-500 hover:border-red-800 hover:bg-red-950 hover:text-red-400 transition-colors"
+                    title="Delete"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -142,14 +141,24 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
       </div>
 
       {/* Submit Modal */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Submit Leave Request">
+      <Modal open={showAdd} onClose={() => { setShowAdd(false); setSubmitted(false); }} title="Submit Leave Request">
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Team Member</label>
-            <select value={form.member_id || ''} onChange={e => setForm({ ...form, member_id: e.target.value })} className="w-full px-3.5 py-2.5 rounded-lg border border-surface-400 bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50">
+            <select
+              value={form.member_id || ''}
+              onChange={e => setForm({ ...form, member_id: e.target.value })}
+              className={`w-full px-3.5 py-2.5 rounded-lg border bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 ${submitted && !form.member_id ? 'border-red-500 ring-1 ring-red-500/50' : 'border-surface-400'}`}
+            >
               <option value="">Select member...</option>
               {members.map(m => <option key={m.id} value={m.id}>{m.name} — {m.role}</option>)}
             </select>
+            {submitted && !form.member_id && (
+              <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Please select a team member
+              </p>
+            )}
           </div>
 
           <div>
@@ -162,13 +171,29 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Start Date</label>
-              <input type="date" value={form.start_date || ''} onChange={e => setForm({ ...form, start_date: e.target.value })} className="w-full px-3.5 py-2.5 rounded-lg border border-surface-400 bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50" />
+              <input
+                type="date"
+                value={form.start_date || ''}
+                onChange={e => setForm({ ...form, start_date: e.target.value })}
+                className={`w-full px-3.5 py-2.5 rounded-lg border bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:brightness-[10] ${dateError ? 'border-red-500 ring-1 ring-red-500/50' : 'border-surface-400'}`}
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">End Date</label>
-              <input type="date" value={form.end_date || ''} onChange={e => setForm({ ...form, end_date: e.target.value })} className="w-full px-3.5 py-2.5 rounded-lg border border-surface-400 bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50" />
+              <input
+                type="date"
+                value={form.end_date || ''}
+                onChange={e => setForm({ ...form, end_date: e.target.value })}
+                className={`w-full px-3.5 py-2.5 rounded-lg border bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:brightness-[10] ${dateError ? 'border-red-500 ring-1 ring-red-500/50' : 'border-surface-400'}`}
+              />
             </div>
           </div>
+          {dateError && (
+            <p className="text-xs text-red-400 flex items-center gap-1 -mt-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              End date must be on or after start date
+            </p>
+          )}
 
           {/* Info box */}
           {form.start_date && form.end_date && (

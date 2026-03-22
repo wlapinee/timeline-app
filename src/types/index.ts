@@ -34,4 +34,4 @@ export interface Holiday {
   nameTh: string;
 }
 
-export type Page = 'gantt' | 'team' | 'leave';
+export type Page = 'gantt' | 'team' | 'leave' | 'dashboard';

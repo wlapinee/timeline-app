@@ -1,21 +1,31 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Page, Task, TeamMember, LeaveRequest } from '@/types';
 import { formatDate, addDays, parseDate } from '@/lib/holidays';
 import Navbar from '@/components/Navbar';
 import GanttPage from '@/components/GanttPage';
 import TeamPage from '@/components/TeamPage';
 import LeavePage from '@/components/LeavePage';
+import DashboardPage from '@/components/DashboardPage';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 export default function Home() {
-  const [page, setPage] = useState<Page>('gantt');
+  const [page, setPage] = useState<Page>('dashboard');
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [members, setMembersState] = useState<TeamMember[]>([]);
   const [tasks, setTasksState] = useState<Task[]>([]);
   const [leaveRequests, setLeaveRequestsState] = useState<LeaveRequest[]>([]);
   const [projectName, setProjectName] = useState('My Project');
+
+  const membersRef = useRef<TeamMember[]>([]);
+  const tasksRef = useRef<Task[]>([]);
+  const leaveRef = useRef<LeaveRequest[]>([]);
+  membersRef.current = members;
+  tasksRef.current = tasks;
+  leaveRef.current = leaveRequests;
 
   // Load all data from DB on mount
   const loadData = useCallback(async () => {
@@ -45,29 +55,32 @@ export default function Home() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Tasks — diff old vs new to detect add/update/delete
+  // Tasks — sync runs outside the state updater to avoid React StrictMode double-invoke
   const setTasks: React.Dispatch<React.SetStateAction<Task[]>> = useCallback((updater) => {
-    setTasksState(prev => {
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      syncTasks(prev, next);
-      return next;
-    });
+    const prev = tasksRef.current;
+    const next = typeof updater === 'function' ? updater(prev) : updater;
+    tasksRef.current = next;
+    setTasksState(next);
+    setSaving(true);
+    syncTasks(prev, next).finally(() => setSaving(false));
   }, []);
 
   const setMembers: React.Dispatch<React.SetStateAction<TeamMember[]>> = useCallback((updater) => {
-    setMembersState(prev => {
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      syncMembers(prev, next);
-      return next;
-    });
+    const prev = membersRef.current;
+    const next = typeof updater === 'function' ? updater(prev) : updater;
+    membersRef.current = next;
+    setMembersState(next);
+    setSaving(true);
+    syncMembers(prev, next).finally(() => setSaving(false));
   }, []);
 
   const setLeaveRequests: React.Dispatch<React.SetStateAction<LeaveRequest[]>> = useCallback((updater) => {
-    setLeaveRequestsState(prev => {
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      syncLeave(prev, next);
-      return next;
-    });
+    const prev = leaveRef.current;
+    const next = typeof updater === 'function' ? updater(prev) : updater;
+    leaveRef.current = next;
+    setLeaveRequestsState(next);
+    setSaving(true);
+    syncLeave(prev, next).finally(() => setSaving(false));
   }, []);
 
   // Build set of approved leave day strings for gantt overlay
@@ -86,16 +99,11 @@ export default function Home() {
     return set;
   }, [leaveRequests]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400 text-sm animate-pulse">Loading...</div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingOverlay message="Loading..." />;
 
   return (
     <div className="min-h-screen">
+      {saving && <LoadingOverlay message="Saving..." />}
       <Navbar page={page} setPage={setPage} />
 
       <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-5 sm:py-6">
@@ -119,6 +127,12 @@ export default function Home() {
             members={members}
           />
         )}
+        {page === 'dashboard' && (
+          <DashboardPage
+            leaveRequests={leaveRequests}
+            members={members}
+          />
+        )}
       </main>
 
     </div>
@@ -127,68 +141,62 @@ export default function Home() {
 
 // --- Sync helpers ---
 
-function syncTasks(prev: Task[], next: Task[]) {
+async function syncTasks(prev: Task[], next: Task[]): Promise<void> {
   const prevMap = new Map(prev.map(t => [t.id, t]));
   const nextMap = new Map(next.map(t => [t.id, t]));
+  const promises: Promise<unknown>[] = [];
 
-  // Added or updated
   for (const t of next) {
     if (!prevMap.has(t.id)) {
-      // New task — id was set optimistically, but we POST to get real UUID back
-      fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(t) })
-        .catch(console.error);
+      promises.push(fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(t) }));
     } else if (JSON.stringify(prevMap.get(t.id)) !== JSON.stringify(t)) {
-      fetch(`/api/tasks/${t.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(t) })
-        .catch(console.error);
+      promises.push(fetch(`/api/tasks/${t.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(t) }));
     }
   }
-
-  // Deleted
   for (const t of prev) {
     if (!nextMap.has(t.id)) {
-      fetch(`/api/tasks/${t.id}`, { method: 'DELETE' }).catch(console.error);
+      promises.push(fetch(`/api/tasks/${t.id}`, { method: 'DELETE' }));
     }
   }
+  await Promise.all(promises);
 }
 
-function syncMembers(prev: TeamMember[], next: TeamMember[]) {
+async function syncMembers(prev: TeamMember[], next: TeamMember[]): Promise<void> {
   const prevMap = new Map(prev.map(m => [m.id, m]));
   const nextMap = new Map(next.map(m => [m.id, m]));
+  const promises: Promise<unknown>[] = [];
 
   for (const m of next) {
     if (!prevMap.has(m.id)) {
-      fetch('/api/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(m) })
-        .catch(console.error);
+      promises.push(fetch('/api/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(m) }));
     } else if (JSON.stringify(prevMap.get(m.id)) !== JSON.stringify(m)) {
-      fetch(`/api/members/${m.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(m) })
-        .catch(console.error);
+      promises.push(fetch(`/api/members/${m.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(m) }));
     }
   }
-
   for (const m of prev) {
     if (!nextMap.has(m.id)) {
-      fetch(`/api/members/${m.id}`, { method: 'DELETE' }).catch(console.error);
+      promises.push(fetch(`/api/members/${m.id}`, { method: 'DELETE' }));
     }
   }
+  await Promise.all(promises);
 }
 
-function syncLeave(prev: LeaveRequest[], next: LeaveRequest[]) {
+async function syncLeave(prev: LeaveRequest[], next: LeaveRequest[]): Promise<void> {
   const prevMap = new Map(prev.map(l => [l.id, l]));
   const nextMap = new Map(next.map(l => [l.id, l]));
+  const promises: Promise<unknown>[] = [];
 
   for (const l of next) {
     if (!prevMap.has(l.id)) {
-      fetch('/api/leave', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(l) })
-        .catch(console.error);
+      promises.push(fetch('/api/leave', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(l) }));
     } else if (JSON.stringify(prevMap.get(l.id)) !== JSON.stringify(l)) {
-      fetch(`/api/leave/${l.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(l) })
-        .catch(console.error);
+      promises.push(fetch(`/api/leave/${l.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(l) }));
     }
   }
-
   for (const l of prev) {
     if (!nextMap.has(l.id)) {
-      fetch(`/api/leave/${l.id}`, { method: 'DELETE' }).catch(console.error);
+      promises.push(fetch(`/api/leave/${l.id}`, { method: 'DELETE' }));
     }
   }
+  await Promise.all(promises);
 }
