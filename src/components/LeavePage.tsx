@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { LeaveRequest, TeamMember } from '@/types';
 import { formatDate, parseDate, getWorkingDays, getHolidaysInRange, generateId, LEAVE_TYPES, LEAVE_STATUS, diffDays } from '@/lib/holidays';
 import Modal from './Modal';
+import DatePickerInput from './DatePickerInput';
 
 interface LeaveProps {
   leaveRequests: LeaveRequest[];
@@ -171,20 +172,18 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Start Date</label>
-              <input
-                type="date"
+              <DatePickerInput
                 value={form.start_date || ''}
-                onChange={e => setForm({ ...form, start_date: e.target.value })}
-                className={`w-full px-3.5 py-2.5 rounded-lg border bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:brightness-[10] ${dateError ? 'border-red-500 ring-1 ring-red-500/50' : 'border-surface-400'}`}
+                onChange={val => setForm({ ...form, start_date: val })}
+                hasError={!!dateError}
               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">End Date</label>
-              <input
-                type="date"
+              <DatePickerInput
                 value={form.end_date || ''}
-                onChange={e => setForm({ ...form, end_date: e.target.value })}
-                className={`w-full px-3.5 py-2.5 rounded-lg border bg-surface-100 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:brightness-[10] ${dateError ? 'border-red-500 ring-1 ring-red-500/50' : 'border-surface-400'}`}
+                onChange={val => setForm({ ...form, end_date: val })}
+                hasError={!!dateError}
               />
             </div>
           </div>
