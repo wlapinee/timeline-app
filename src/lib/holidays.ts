@@ -123,12 +123,24 @@ export const TASK_COLORS = [
 
 export const LEAVE_TYPES = [
   { value: 'annual', label: 'Annual Leave', labelTh: 'ลาพักร้อน', color: '#3B82F6' },
+  { value: 'annual_half', label: 'Annual Leave (Half Day)', labelTh: 'ลาพักร้อนครึ่งวัน', color: '#60A5FA' },
   { value: 'sick', label: 'Sick Leave', labelTh: 'ลาป่วย', color: '#EF4444' },
+  { value: 'sick_half', label: 'Sick Leave (Half Day)', labelTh: 'ลาป่วยครึ่งวัน', color: '#FCA5A5' },
   { value: 'personal', label: 'Personal Leave', labelTh: 'ลากิจ', color: '#F59E0B' },
+  { value: 'personal_half', label: 'Personal Leave (Half Day)', labelTh: 'ลากิจครึ่งวัน', color: '#FCD34D' },
   { value: 'maternity', label: 'Maternity Leave', labelTh: 'ลาคลอด', color: '#EC4899' },
   { value: 'ordination', label: 'Ordination Leave', labelTh: 'ลาบวช', color: '#8B5CF6' },
   { value: 'other', label: 'Other', labelTh: 'อื่นๆ', color: '#6B7280' },
 ];
+
+export function isHalfDayLeave(leaveType: string): boolean {
+  return leaveType.endsWith('_half');
+}
+
+export function getWorkingDaysForLeave(start: Date, end: Date, leaveType: string): number {
+  const days = getWorkingDays(start, end);
+  return isHalfDayLeave(leaveType) ? days * 0.5 : days;
+}
 
 export const LEAVE_STATUS: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: 'Pending', color: '#F59E0B', bg: '#FEF3C7' },

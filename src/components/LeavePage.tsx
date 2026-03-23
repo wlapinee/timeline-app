@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { LeaveRequest, TeamMember } from '@/types';
-import { formatDate, parseDate, getWorkingDays, getHolidaysInRange, generateId, LEAVE_TYPES, LEAVE_STATUS, diffDays } from '@/lib/holidays';
+import { formatDate, parseDate, getWorkingDaysForLeave, getHolidaysInRange, generateId, LEAVE_TYPES, LEAVE_STATUS, diffDays } from '@/lib/holidays';
 import Modal from './Modal';
 import DatePickerInput from './DatePickerInput';
 
@@ -84,7 +84,7 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
           const lt = LEAVE_TYPES.find(t => t.value === lr.leave_type);
           const st = LEAVE_STATUS[lr.status];
           const totalDays = diffDays(parseDate(lr.start_date), parseDate(lr.end_date)) + 1;
-          const workDays = getWorkingDays(parseDate(lr.start_date), parseDate(lr.end_date));
+          const workDays = getWorkingDaysForLeave(parseDate(lr.start_date), parseDate(lr.end_date), lr.leave_type);
 
           return (
             <div key={lr.id} className="bg-surface-200 rounded-xl border border-surface-300 p-4 sm:p-5">
@@ -197,7 +197,7 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
           {/* Info box */}
           {form.start_date && form.end_date && (
             <div className="bg-surface-100 rounded-xl p-3 text-sm text-gray-400">
-              <strong className="text-white">{getWorkingDays(parseDate(form.start_date), parseDate(form.end_date))}</strong> working days will be used
+              <strong className="text-white">{getWorkingDaysForLeave(parseDate(form.start_date), parseDate(form.end_date), form.leave_type ?? '')}</strong> working days will be used
               {(() => {
                 const holidays = getHolidaysInRange(form.start_date, form.end_date);
                 if (holidays.length > 0) {
