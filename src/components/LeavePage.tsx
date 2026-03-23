@@ -24,9 +24,19 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
 
   const dateError = form.start_date && form.end_date && form.start_date > form.end_date;
 
+  // Check if selected member already has a leave overlapping with the selected range
+  const conflictLeave = form.member_id && form.start_date && form.end_date && !dateError
+    ? leaveRequests.find(lr =>
+        lr.member_id === form.member_id &&
+        lr.status !== 'rejected' &&
+        lr.start_date <= form.end_date! &&
+        lr.end_date >= form.start_date!
+      )
+    : undefined;
+
   function handleSubmit() {
     setSubmitted(true);
-    if (!form.member_id || !form.start_date || !form.end_date || dateError) return;
+    if (!form.member_id || !form.start_date || !form.end_date || dateError || conflictLeave) return;
     setLeaveRequests(prev => [...prev, { ...form, id: generateId(), status: 'approved' } as LeaveRequest]);
     setForm(defaultForm());
     setSubmitted(false);
@@ -194,6 +204,20 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
             </p>
           )}
 
+          {/* Duplicate leave warning */}
+          {conflictLeave && (() => {
+            const lt = LEAVE_TYPES.find(t => t.value === conflictLeave.leave_type);
+            const member = members.find(m => m.id === conflictLeave.member_id);
+            return (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-xs text-red-300 flex gap-2">
+                <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>
+                  <strong className="text-red-200">{member?.name}</strong> already has a <strong className="text-red-200">{lt?.labelTh ?? conflictLeave.leave_type}</strong> leave on <strong className="text-red-200">{conflictLeave.start_date}{conflictLeave.start_date !== conflictLeave.end_date ? ` – ${conflictLeave.end_date}` : ''}</strong>. Cannot submit overlapping leave.
+                </span>
+              </div>
+            );
+          })()}
+
           {/* Info box */}
           {form.start_date && form.end_date && (
             <div className="bg-surface-100 rounded-xl p-3 text-sm text-gray-400">
@@ -220,7 +244,15 @@ export default function LeavePage({ leaveRequests, setLeaveRequests, members }: 
 
         <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-surface-400/50">
           <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 rounded-lg bg-surface-400 text-gray-300 text-sm font-medium hover:bg-surface-400/80 transition-colors">Cancel</button>
-          <button onClick={handleSubmit} className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-accent to-accent-dark text-white text-sm font-semibold shadow-md shadow-accent/30">
+          <button
+            onClick={handleSubmit}
+            disabled={!!conflictLeave}
+            className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              conflictLeave
+                ? 'bg-surface-400 text-gray-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-accent to-accent-dark text-white shadow-md shadow-accent/30'
+            }`}
+          >
             Submit Request
           </button>
         </div>
