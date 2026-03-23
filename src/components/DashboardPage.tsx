@@ -204,6 +204,14 @@ function LeaveCalendar({ leaveRequests, members, today }: {
   }
 
   const MAX_SHOW = 3;
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const selectedLeave = selectedDate ? (leaveMap.get(selectedDate) ?? []) : [];
+  const selectedHoliday = selectedDate ? getHoliday(selectedDate) : undefined;
+
+  function formatDisplayDate(ds: string) {
+    const d = parseDate(ds);
+    return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
 
   return (
     <div>
@@ -253,13 +261,17 @@ function LeaveCalendar({ leaveRequests, members, today }: {
             else if (holiday) cellBg = 'bg-amber-500/5';
             else if (weekend) cellBg = 'bg-surface-100/5';
 
+            const clickable = isCurrentMonth && leave.length > 0;
+
             return (
               <div
                 key={`${date}-${i}`}
+                onClick={() => clickable && setSelectedDate(date)}
                 className={`min-h-[100px] p-2 flex flex-col gap-1 ${cellBg}
                   ${!isLastCol ? 'border-r border-surface-400/30' : ''}
                   ${!isLastRow ? 'border-b border-surface-400/30' : ''}
-                  ${isToday ? 'ring-1 ring-inset ring-accent/30' : ''}`}
+                  ${isToday ? 'ring-1 ring-inset ring-accent/30' : ''}
+                  ${clickable ? 'cursor-pointer hover:bg-white/5 transition-colors' : ''}`}
               >
                 {/* Day number row */}
                 <div className="flex items-center justify-between mb-0.5">
@@ -320,6 +332,63 @@ function LeaveCalendar({ leaveRequests, members, today }: {
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-surface-100/10 inline-block" />Weekend</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-accent/10 border border-accent/30 inline-block" />Today</span>
       </div>
+
+      {/* Day detail modal */}
+      {selectedDate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedDate(null)}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-sm bg-surface-300 rounded-2xl border border-surface-400 shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-surface-400/50">
+              <div>
+                <p className="text-xs text-gray-400">{formatDisplayDate(selectedDate)}</p>
+                {selectedHoliday && (
+                  <p className="text-xs text-amber-400 mt-0.5">🎌 {selectedHoliday.nameTh}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-surface-400 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {/* Member list */}
+            <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
+              {selectedLeave.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No leave on this day</p>
+              ) : (
+                selectedLeave.map(({ member, lr }) => {
+                  const color = member?.avatar_color ?? '#6B7280';
+                  const typeInfo = getLeaveTypeInfo(lr.leave_type);
+                  return (
+                    <div key={lr.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-surface-200">
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                        style={{ backgroundColor: color }}
+                      >
+                        {(member?.name ?? '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-white truncate">{member?.name ?? 'Unknown'}</p>
+                        <p className="text-xs text-gray-400">{lr.start_date} – {lr.end_date}</p>
+                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0"
+                        style={{ backgroundColor: typeInfo.color + '22', color: typeInfo.color }}>
+                        {typeInfo.label}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
