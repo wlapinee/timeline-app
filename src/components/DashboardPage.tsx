@@ -67,10 +67,6 @@ export default function DashboardPage({ leaveRequests, members }: Props) {
     return map;
   }, [currentYear]);
 
-  const upcomingHoliday = useMemo(() => {
-    return THAI_HOLIDAYS.find(h => h.date >= today);
-  }, [today]);
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -81,30 +77,16 @@ export default function DashboardPage({ leaveRequests, members }: Props) {
         </p>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="On Leave Today" value={todayLeave.length} color="#EF4444" />
-        <StatCard label="Leave This Month" value={monthLeave.length} color="#3B82F6" />
-        <StatCard label="Team Members" value={members.length} color="#10B981" />
-        <StatCard
-          label="Next Holiday"
-          value={upcomingHoliday ? upcomingHoliday.date.slice(5) : '—'}
-          sub={upcomingHoliday?.nameTh}
-          color="#F59E0B"
-          small
-        />
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Today's leave */}
+        {/* On Leave Today */}
         <section className="bg-surface-200 rounded-2xl border border-surface-300 p-5">
-          <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-            On Leave Today
-            {todayLeave.length > 0 && (
-              <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">{todayLeave.length}</span>
-            )}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+              On Leave Today
+            </h2>
+            <span className="text-3xl font-bold" style={{ color: '#EF4444' }}>{todayLeave.length}</span>
+          </div>
           {todayLeave.length === 0 ? (
             <p className="text-sm text-gray-500 py-6 text-center">No one is on leave today</p>
           ) : (
@@ -129,7 +111,6 @@ export default function DashboardPage({ leaveRequests, members }: Props) {
                     >
                       {typeInfo.label}
                     </span>
-                    <StatusBadge status={lr.status} />
                   </div>
                 );
               })}
@@ -137,15 +118,15 @@ export default function DashboardPage({ leaveRequests, members }: Props) {
           )}
         </section>
 
-        {/* This month's leave */}
+        {/* Leave This Month */}
         <section className="bg-surface-200 rounded-2xl border border-surface-300 p-5">
-          <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
-            Leave This Month — {MONTH_NAMES[currentMonth]}
-            {monthLeave.length > 0 && (
-              <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">{monthLeave.length}</span>
-            )}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
+              Leave This Month — {MONTH_NAMES[currentMonth]}
+            </h2>
+            <span className="text-3xl font-bold" style={{ color: '#3B82F6' }}>{monthLeave.length}</span>
+          </div>
           {monthLeave.length === 0 ? (
             <p className="text-sm text-gray-500 py-6 text-center">No leave requests this month</p>
           ) : (
@@ -170,7 +151,6 @@ export default function DashboardPage({ leaveRequests, members }: Props) {
                     >
                       {typeInfo.label}
                     </span>
-                    <StatusBadge status={lr.status} />
                   </div>
                 );
               })}
@@ -228,35 +208,3 @@ export default function DashboardPage({ leaveRequests, members }: Props) {
   );
 }
 
-function StatCard({ label, value, color, sub, small }: {
-  label: string;
-  value: string | number;
-  color: string;
-  sub?: string;
-  small?: boolean;
-}) {
-  return (
-    <div className="bg-surface-200 rounded-2xl border border-surface-300 p-4">
-      <p className="text-xs text-gray-400 mb-1">{label}</p>
-      <p
-        className={`font-bold text-white ${small ? 'text-lg' : 'text-3xl'}`}
-        style={{ color }}
-      >
-        {value}
-      </p>
-      {sub && <p className="text-[11px] text-gray-500 mt-0.5 truncate">{sub}</p>}
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    approved: { label: 'Approved', cls: 'bg-green-500/20 text-green-300' },
-    pending:  { label: 'Pending',  cls: 'bg-yellow-500/20 text-yellow-300' },
-    rejected: { label: 'Rejected', cls: 'bg-red-500/20 text-red-300' },
-  };
-  const s = map[status] ?? { label: status, cls: 'bg-gray-500/20 text-gray-300' };
-  return (
-    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${s.cls}`}>{s.label}</span>
-  );
-}
