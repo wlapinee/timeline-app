@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/db';
 import { leaveRequests, teamMembers } from '@/db/schema';
 import { lte, gte, eq, and } from 'drizzle-orm';
+import { isNonWorkingDay } from '@/lib/holidays';
 
 const LEAVE_TYPE_TH: Record<string, string> = {
   annual: 'ลาพักร้อน',
@@ -36,6 +37,12 @@ export async function GET(req: NextRequest) {
   }
 
   const today = getTodayBangkok();
+
+  // Skip weekends and public holidays
+  const [y, m, d] = today.split('-').map(Number);
+  if (isNonWorkingDay(new Date(y, m - 1, d))) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'non-working day', date: today });
+  }
 
   try {
     const db = getDb();
