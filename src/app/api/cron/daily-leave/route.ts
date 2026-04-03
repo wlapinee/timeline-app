@@ -67,10 +67,24 @@ export async function GET(req: NextRequest) {
     const memberMap = new Map(members.map(m => [m.id, m]));
     const thaiDate = formatThaiDate(today);
 
+    const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+    const noLeaveTemplates = [
+      `🚨 ประกาศด่วน!! 🚨\n📅 ${thaiDate}\n\nวันนี้ไม่มีใครลาแฮะ 🤩\nไปทำงานที่เรารักกกกั๊นนนนนนนน 😒💀`,
+      `☀️ อรุณสวัสดิ์ทุกคน!\n📅 ${thaiDate}\n\nข่าวดีคือ... วันนี้ไม่มีใครลาเลย 🥳\nข่าวร้ายคือ... ทุกคนต้องทำงานหมดเลย 😇\nสู้ๆ นะจ๊ะ 🔒`,
+      `📢 morning check-in~\n📅 ${thaiDate}\n\nสแกนชื่อครบทุกคน ✅\nไม่มีใครหาย ไม่มีใครหนี\nวันนี้ทีมพร้อม 100% 💪`,
+    ];
+
+    const hasLeaveTemplates = (lines: string[]) => [
+      `🚨 ประกาศด่วน!! 🚨\n📅 ${thaiDate}\n\nมีคนได้รับอนุญาตให้นอนอยู่บ้านวันนี้ถึง ${todayLeave.length} คน!!! 😤\nขณะที่พวกเราต้องมาทนนั่งทำงาน โห...\n\n${lines.join('\n')}\n\nส่วนที่เหลือ... ยินดีด้วยนะที่ยังมีชีวิตอยู่ในออฟฟิศ 🫠\nทำงานไปก่อนเน้อ สู้ๆ 💪 (ไม่มีใครช่วยได้)`,
+      `🕵️ รายงานลับสุดยอด\n📅 ${thaiDate}\n\nพบผู้ต้องสงสัยที่ไม่มาทำงานวันนี้ ${todayLeave.length} ราย 🚔\n\n${lines.join('\n')}\n\nทีมสืบสวนกำลังตรวจสอบ... 🔍\nที่เหลือรีบเปิด laptop ก่อนโดนจับด้วยน้า 😂`,
+      `💌 จดหมายเปิดผนึกถึงทีม\n📅 ${thaiDate}\n\nเรียน ทุกคนที่มาทำงานวันนี้,\n\nขอแจ้งให้ทราบว่ามีเพื่อนร่วมงานของท่านจำนวน ${todayLeave.length} คน\nตัดสินใจเลือกชีวิตที่ดีกว่าในวันนี้ 😌✨\n\n${lines.join('\n')}\n\nขอบคุณที่ท่านยังคงเสียสละมาทำงาน\nด้วยความเคารพ,\nระบบ HR 🤖`,
+    ];
+
     let message: string;
 
     if (todayLeave.length === 0) {
-      message = `🚨 ประกาศด่วน!! 🚨\n📅 ${thaiDate}\n\nวันนี้ไม่มีใครลาแฮะ 🤩\n ไปทำงานที่เรารักกกกั๊นนนนนนนน 😒💀`;
+      message = pick(noLeaveTemplates);
     } else {
       const lines = todayLeave.map(lr => {
         const member = memberMap.get(lr.member_id);
@@ -79,7 +93,7 @@ export async function GET(req: NextRequest) {
         const reason = lr.reason ? ` เหตุผล: "${lr.reason}" (ไม่รู้จริงมั้ยนะ 🤨)` : ' (ไม่บอกเหตุผลเลย หนีเที่ยวชัวร์ 👀)';
         return `• ${name} — ${typeTh}${reason}`;
       });
-      message = `🚨 ประกาศด่วน!! 🚨\n📅 ${thaiDate}\n\nมีคนได้รับอนุญาตให้นอนอยู่บ้านวันนี้ถึง ${todayLeave.length} คน!!! 😤\nขณะที่พวกเราต้องมาทนนั่งทำงาน โห...\n\n${lines.join('\n')}\n\nส่วนที่เหลือ... ยินดีด้วยนะที่ยังมีชีวิตอยู่ในออฟฟิศ 🫠\nทำงานไปก่อนเน้อ สู้ๆ 💪 (ไม่มีใครช่วยได้)`;
+      message = pick(hasLeaveTemplates(lines));
     }
 
     // Send to LINE group
