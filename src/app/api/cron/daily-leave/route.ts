@@ -6,8 +6,11 @@ import { isNonWorkingDay } from '@/lib/holidays';
 
 const LEAVE_TYPE_TH: Record<string, string> = {
   annual: 'ลาพักร้อน',
+  annual_half: 'ลาพักร้อนครึ่งวัน',
   sick: 'ลาป่วย',
+  sick_half: 'ลาป่วยครึ่งวัน',
   personal: 'ลากิจ',
+  personal_half: 'ลากิจครึ่งวัน',
   maternity: 'ลาคลอด',
   ordination: 'ลาบวช',
   other: 'อื่นๆ',
