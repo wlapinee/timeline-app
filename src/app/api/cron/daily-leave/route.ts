@@ -70,16 +70,16 @@ export async function GET(req: NextRequest) {
     let message: string;
 
     if (todayLeave.length === 0) {
-      message = `📋 รายงานการลาประจำวัน\nวันที่ ${thaiDate}\n\n✅ ไม่มีผู้ลาวันนี้`;
+      message = `🚨 ประกาศด่วน!! 🚨\n📅 ${thaiDate}\n\nวันนี้ไม่มีใครลาแฮะ 🤩\n ไปทำงานที่เรารักกกกั๊นนนนนนนน 😒💀`;
     } else {
       const lines = todayLeave.map(lr => {
         const member = memberMap.get(lr.member_id);
         const name = member?.name ?? 'Unknown';
         const typeTh = LEAVE_TYPE_TH[lr.leave_type] ?? lr.leave_type;
-        const reason = lr.reason ? ` (${lr.reason})` : '';
+        const reason = lr.reason ? ` เหตุผล: "${lr.reason}" (ไม่รู้จริงมั้ยนะ 🤨)` : ' (ไม่บอกเหตุผลเลย หนีเที่ยวชัวร์ 👀)';
         return `• ${name} — ${typeTh}${reason}`;
       });
-      message = `📋 รายงานการลาประจำวัน\nวันที่ ${thaiDate}\n\n👤 ผู้ลาวันนี้ (${todayLeave.length} คน):\n${lines.join('\n')}`;
+      message = `🚨 ประกาศด่วน!! 🚨\n📅 ${thaiDate}\n\nมีคนได้รับอนุญาตให้นอนอยู่บ้านวันนี้ถึง ${todayLeave.length} คน!!! 😤\nขณะที่พวกเราต้องมาทนนั่งทำงาน โห...\n\n${lines.join('\n')}\n\nส่วนที่เหลือ... ยินดีด้วยนะที่ยังมีชีวิตอยู่ในออฟฟิศ 🫠\nทำงานไปก่อนเน้อ สู้ๆ 💪 (ไม่มีใครช่วยได้)`;
     }
 
     // Send to LINE group
