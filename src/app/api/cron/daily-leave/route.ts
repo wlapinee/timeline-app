@@ -100,11 +100,27 @@ export async function GET(req: NextRequest) {
     if (todayLeave.length === 0) {
       message = pick(noLeaveTemplates);
     } else {
+      const withReasonComments = [
+        '(ไม่รู้จริงมั้ยนะ 🤨)',
+        '(น่าเชื่อถือมากเลย 👏)',
+        '(โอเค... ถ้าว่างั้น 🙄)',
+        '(ขอให้หายเร็วๆ นะ หรือเปล่า 555)',
+        '(เข้าใจๆ ไม่ได้ตัดสินเลย จริงๆ 😇)',
+      ];
+      const noReasonComments = [
+        '(ไม่บอกเหตุผลเลย หนีเที่ยวชัวร์ 👀)',
+        '(ลึกลับมากกก เราไม่โกรธหรอก 😤)',
+        '(ไม่พูดก็รู้ว่าไปไหน 555)',
+        '(เก็บความลับเก่งมาก ปรบมือให้ 👏)',
+        '(ไม่เป็นไร เดาเอาเองก็ได้ 🕵️)',
+      ];
       const lines = todayLeave.map(lr => {
         const member = memberMap.get(lr.member_id);
         const name = member?.name ?? 'Unknown';
         const typeTh = LEAVE_TYPE_TH[lr.leave_type] ?? lr.leave_type;
-        const reason = lr.reason ? ` เหตุผล: "${lr.reason}" (ไม่รู้จริงมั้ยนะ 🤨)` : ' (ไม่บอกเหตุผลเลย หนีเที่ยวชัวร์ 👀)';
+        const reason = lr.reason
+          ? ` เหตุผล: "${lr.reason}" ${pick(withReasonComments)}`
+          : ` ${pick(noReasonComments)}`;
         return `• ${name} — ${typeTh}${reason}`;
       });
       message = pick(hasLeaveTemplates(lines));
