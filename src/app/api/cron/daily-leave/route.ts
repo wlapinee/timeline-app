@@ -64,23 +64,21 @@ export async function GET(req: NextRequest) {
       db.select().from(teamMembers),
     ]);
 
+    if (todayLeave.length === 0) {
+      return NextResponse.json({ ok: true, skipped: true, reason: 'no leave today', date: today });
+    }
+
     const memberMap = new Map(members.map(m => [m.id, m]));
     const thaiDate = formatThaiDate(today);
 
-    let message: string;
-
-    if (todayLeave.length === 0) {
-      message = `ฮัลโหลลล ทีมมม 👋\n📅 ${thaiDate}\n\nวันนี้ไม่มีใครลาเลยอะ มาครบจ้าาา ✨\nลุยกันต่อเนอะ 🔥`;
-    } else {
-      const lines = todayLeave.map(lr => {
-        const member = memberMap.get(lr.member_id);
-        const name = member?.name ?? 'Unknown';
-        const typeTh = LEAVE_TYPE_TH[lr.leave_type] ?? lr.leave_type;
-        const reason = lr.reason ? ` (เพราะ ${lr.reason})` : '';
-        return `• ${name} — ${typeTh}${reason}`;
-      });
-      message = `ฮัลโหลลล ทีมมม 👋\n📅 ${thaiDate}\n\nวันนี้มีคนลา ${todayLeave.length} คนน้าาา 👇\n${lines.join('\n')}\n\nที่เหลือสู้ๆ เนอะ 🫶`;
-    }
+    const lines = todayLeave.map(lr => {
+      const member = memberMap.get(lr.member_id);
+      const name = member?.name ?? 'Unknown';
+      const typeTh = LEAVE_TYPE_TH[lr.leave_type] ?? lr.leave_type;
+      const reason = lr.reason ? ` (เพราะ ${lr.reason})` : '';
+      return `• ${name} — ${typeTh}${reason}`;
+    });
+    const message = `ฮัลโหลลล ทีมมม 👋\n📅 ${thaiDate}\n\nวันนี้มีคนลา ${todayLeave.length} คนน้าาา 👇\n${lines.join('\n')}\n\nที่เหลือสู้ๆ เนอะ 🫶`;
 
     // Send to LINE group
     const lineRes = await fetch('https://api.line.me/v2/bot/message/push', {
