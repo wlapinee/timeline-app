@@ -25,7 +25,6 @@ export const THAI_HOLIDAYS: Holiday[] = [
   { date: '2025-12-31', name: "New Year's Eve", nameTh: 'วันสิ้นปี' },
   // 2026
   { date: '2026-01-01', name: "New Year's Day", nameTh: 'วันขึ้นปีใหม่' },
-  { date: '2026-01-02', name: 'Special Holiday', nameTh: 'วันหยุดพิเศษ' },
   { date: '2026-03-03', name: 'Makha Bucha Day', nameTh: 'วันมาฆบูชา' },
   { date: '2026-04-06', name: 'Chakri Memorial Day', nameTh: 'วันจักรี' },
   { date: '2026-04-13', name: 'Songkran Festival', nameTh: 'วันสงกรานต์' },
@@ -38,12 +37,11 @@ export const THAI_HOLIDAYS: Holiday[] = [
   { date: '2026-06-03', name: "Queen Suthida's Birthday", nameTh: 'วันเฉลิมพระชนมพรรษาสมเด็จพระราชินี' },
   { date: '2026-07-28', name: "King's Birthday", nameTh: 'วันเฉลิมพระชนมพรรษา ร.10' },
   { date: '2026-07-29', name: 'Asalha Bucha Day', nameTh: 'วันอาสาฬหบูชา' },
-  { date: '2026-07-30', name: 'Buddhist Lent Day', nameTh: 'วันเข้าพรรษา' },
-  { date: '2026-08-12', name: "Queen Mother's Birthday", nameTh: 'วันแม่แห่งชาติ' },
+  { date: '2026-08-12', name: "Mother's Day", nameTh: 'วันแม่แห่งชาติ' },
   { date: '2026-10-13', name: 'King Bhumibol Memorial Day', nameTh: 'วันคล้ายวันสวรรคต ร.9' },
   { date: '2026-10-23', name: 'Chulalongkorn Day', nameTh: 'วันปิยมหาราช' },
-  { date: '2026-12-05', name: "King Bhumibol's Birthday", nameTh: 'วันพ่อแห่งชาติ' },
-  { date: '2026-12-10', name: 'Constitution Day', nameTh: 'วันรัฐธรรมนูญ' },
+  { date: '2026-12-05', name: "Father's Day", nameTh: 'วันพ่อแห่งชาติ' },
+  { date: '2026-12-07', name: "Father's Day (in lieu)", nameTh: 'ชดเชยวันพ่อแห่งชาติ' },
   { date: '2026-12-31', name: "New Year's Eve", nameTh: 'วันสิ้นปี' },
 ];
 
